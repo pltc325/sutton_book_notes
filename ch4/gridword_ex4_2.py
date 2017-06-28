@@ -64,7 +64,7 @@ if __name__ == "__main__":
     trans_probs[13][down][13] = 0
 
     policy_iteration = PolicyIteration(trans_probs, rewards, action_probs, 0.00001, states_num, actions_num, 1)
-    policy_iteration.policy_evaluation(400)
+    policy_iteration.policy_evaluation()
     for i in range(row_num):
         for j in range(col_num):
             print("%.2f" % policy_iteration.v[i * col_num + j], end=" ")

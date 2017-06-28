@@ -142,7 +142,7 @@ def plot_v(values):
 if __name__ == "__main__":
     env = gym.make('Blackjack-v0')
     agent = BlackJackMonteCaroleAgent(0.1)
-    episode_nums = [2000000]
+    episode_nums = [200000]
     avgs_state_value_functions = []
     for episode_num in episode_nums:
         for i in range(episode_num):

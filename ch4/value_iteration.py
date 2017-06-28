@@ -19,7 +19,7 @@ class ValueIteration(object):
         self.actions_num = actions_num
         self.v = np.zeros(states_num)
         self.v[0] = 0
-        self.v[100] = 0
+#        self.v[100] = 0
         self.gamma = gamma
         self.states_terminal = states_terminal
 
