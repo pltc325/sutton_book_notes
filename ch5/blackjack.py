@@ -46,16 +46,22 @@ class BlackJackMonteCaroleAgent(object):
             action = self.hit
         return action
 
-    def update(self, obs, reward):
-        for ob in obs:
-            cur_sum, dealer_num, is_usable = ob
+    def update(self, obs, rewards):
+        rewards_actual = []
+        max_reward = rewards[-1]
+        rewards_actual.append(max_reward)
+        for i in range(len(rewards)-1):
+            rewards_actual.append(max_reward - rewards[i])
+
+        for i in range (len(obs)):
+            cur_sum, dealer_num, is_usable = obs[i]
             if cur_sum < 12:
                 continue
             cur_sum_index = self.cur_num_to_index[cur_sum]
             is_usable_index = self.is_usable_to_index[is_usable]
             dealer_num_index = dealer_num - 1
             self.state_value_counts[is_usable_index][dealer_num_index][cur_sum_index] += 1
-            self.state_value_functions[is_usable_index][dealer_num_index][cur_sum_index] += reward
+            self.state_value_functions[is_usable_index][dealer_num_index][cur_sum_index] += rewards_actual[i]
 
     def summarize(self):
         self.avg_state_value_functions = self.state_value_functions / self.state_value_counts
@@ -81,7 +87,7 @@ def plot(values):
     x, y = np.meshgrid(x, y)
     fig = plt.figure(figsize=(8, 8))
     n = 1
-    episode_num_titles = {0:"10000 episodes", 1:"50000 episodes"}
+    episode_num_titles = {0:"10000 episodes", 1:"500000 episodes"}
     is_usable_titles = {0:'Do Not Have Usable ACE' , 1:'Do Have Usable ACE'}
     for i in range(len(values)):
         for k in range(2):
@@ -94,7 +100,7 @@ def plot(values):
 if __name__ == "__main__":
     env = gym.make('Blackjack-v0')
     agent = BlackJackMonteCaroleAgent()
-    episode_nums = [10000, 50000]
+    episode_nums = [10000, 500000]
     avgs_state_value_functions = []
     for episode_num in episode_nums:
         for i in range(episode_num):
@@ -106,14 +112,16 @@ if __name__ == "__main__":
             ob = cur_sum, env.dealer[0], usable_ace(env.player)
             done = False
             this_suite_obs = []
+            this_suite_rewards = []
             while not done:
                 action = agent.take_action(ob)
                 old_ob = ob
                 this_suite_obs.append(old_ob)
                 ob, reward, done, _ = env.step(action)
                 reward_sum += reward
+                this_suite_rewards.append(reward_sum)
             # update state value function statistic using ob right before done
-            agent.update(this_suite_obs, reward_sum)
+            agent.update(this_suite_obs, this_suite_rewards)
 
         avgs_state_value_functions.append(agent.summarize())
     plot(avgs_state_value_functions)
