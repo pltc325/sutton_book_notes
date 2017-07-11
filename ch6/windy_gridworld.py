@@ -2,7 +2,7 @@ from ch6.WindyAgent import WindyAgent
 
 
 '''
-Try to reproduce Figure 6.4
+Try to reproduce Figure 6.4 using Sarsa: On-Policy TD Control
 '''
 if __name__ == "__main__":
     print("Trying to produce Figure 6.4")

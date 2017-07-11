@@ -2,9 +2,7 @@ import numpy as np
 
 from ch6.Utils import Utils
 
-'''
-Try to reproduce Figure 6.4 using Sarsa: On-Policy TD Control
-'''
+
 class Agent(object):
     def __init__(self, state_num, action_num, start_states, terminal_states, choose_action_strategy, epsilon, alpha, gamma, episode_num, row_num, col_num, step_max):
         self.state_num = state_num
