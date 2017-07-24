@@ -1,7 +1,7 @@
 import numpy as np
 
 from ch6.sarsa_agent import SARSAAgent
-from ch6.utils1 import Utils
+from ch6.utils import Utils
 
 
 class WindyAgent(SARSAAgent):
