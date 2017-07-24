@@ -30,4 +30,3 @@ class SARSAAgent(Agent):
                 step += 1
                 if step > self.step_max:
                     break
-                    

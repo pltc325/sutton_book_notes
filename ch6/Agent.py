@@ -1,8 +1,8 @@
 import numpy as np
 
-from ch6.Utils import Utils
-
-
+'''
+Try to reproduce Figure 6.4 using Sarsa: On-Policy TD Control
+'''
 class Agent(object):
     def __init__(self, state_num, action_num, start_states, terminal_states, choose_action_strategy, epsilon, alpha, gamma, episode_num, row_num, col_num, step_max):
         self.state_num = state_num
@@ -21,6 +21,7 @@ class Agent(object):
         self.step_max = step_max
         self.reset()
         self.cur_state = 0
+        self.path = []
         pass
 
     def reset(self):
@@ -52,7 +53,8 @@ class Agent(object):
         step = 0
         while not done:
             action = self.pi[ob]
-            print(Utils.state2rowcol(ob, self.row_num, self.col_num),action )
+            self.path.append(ob)
+            #print(Utils.state2rowcol(ob, self.row_num, self.col_num),action )
             new_ob, reward, done = self.step(action)
             ob = new_ob
             step += 1
