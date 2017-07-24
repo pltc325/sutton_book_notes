@@ -1,4 +1,4 @@
-from ch6.WindyAgent import WindyAgent
+from ch6.windy_agent import WindyAgent
 
 
 '''
