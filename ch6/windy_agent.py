@@ -1,6 +1,6 @@
 import numpy as np
 
-from ch6.SARSAAgent import SARSAAgent
+from ch6.sarsa_agent import SARSAAgent
 from ch6.utils import Utils
 
 
