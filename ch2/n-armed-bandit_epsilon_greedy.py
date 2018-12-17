@@ -8,52 +8,67 @@ situation.
 In case of epsilon = 0, it works worst for both average reward and best hits count because it never explore, so 
 it's unlikely for it to find the best action.
 
-Epsilon = 0.1 outperforms epsilon = 0.01 in terms of average reward before around 1500 steps, but it is surpassed 
-by the later one after it. Why it is surpassed? It is not so obvious, in fact, the best hits counts of epsilon_0.1 
-is not surpassed by that of epsilon_0.01 util around 10000 steps. The reason is that although epsilon0.1 has more 
-percentage of best action hits, the rest is not ideal as it is selected totally randomly. In contrast, epsilon0.01
-is always 'second best' if it is not the best, and the it beats epsilon0.1 on average.
+Epsilon = 0.1 outperforms epsilon = 0.01 for all the experiments at first some thousands steps, but it is surpassed later.
+This is because at early stage it spots good action very quickly since it explore more, but even if it finds the best action,
+it will still choose non optimal action for the same reason. To the contrary, epsilon_0.01 find the best action slower, but
+once it gets it, it sticks with it, hence gain more value ever after it.
 '''
 
 
 class NArmedBandit(object):
-    def __init__(self,  num_actions, epsilon, num_steps, with_noise = True):
-        self.num_actions = num_actions
+    def __init__(self, num_action, epsilon, num_step, with_noise=True):
+        self.num_action = num_action
         self.epsilon = epsilon
-        self.num_steps = num_steps
+        self.num_steps = num_step
+        # whether or not the estimated action value will be added noise based on actual action value
+        # with noise: Q = q + N(0,1) or without noise: Q = q
         self.with_noise = with_noise
+        # actual action value
+        self.q = None
+        # estimated action value, approximated by average reward
+        self.avg_reward = None
+        # rewards obtained during steps
+        self.rewards = None
+        # number of each action's occurrences
+        self.action_occur_count = None
+        # max actual action value
+        self.max_q = None
+        # number of optimal action's occurrences
+        self.optimal_action_occur_count = None
+        # current step number
+        self.cur_step = 1
+        self.actions_order = None
         self.reset()
 
     def reset(self):
-        self.q = np.random.normal(0, 1, self.num_actions)
-        self.avg_reward = np.zeros((self.num_actions,))
+        self.q = np.random.normal(0, 1, self.num_action)
+        self.avg_reward = np.zeros((self.num_action,))
         self.cur_step = 1
         self.rewards = np.zeros(self.num_steps)
-        self.occur = np.zeros((self.num_actions,))
+        self.action_occur_count = np.zeros((self.num_action,))
         self.max_q = np.argmax(self.q)
-        self.optimal_counts = np.zeros(self.num_steps)
-        self.cur_optimal_counts = 0
+        self.optimal_action_occur_count = np.zeros(self.num_steps)
         self.actions_order = np.zeros(self.num_steps)
 
-    def find_action(self):
+    def choose_action(self):
         p = np.random.uniform(0, 1)
         if p > self.epsilon:
             action = np.argmax(self.avg_reward)
         else:
-            action = np.random.randint(0, 10)
-        self.occur[action] += 1
+            action = np.random.randint(0, self.num_action)
+        self.action_occur_count[action] += 1
         return action
 
     def get_reward(self, action):
         if self.with_noise is True:
-            reward = self.q[action] + np.random.normal(0,1)
+            reward = self.q[action] + np.random.normal(0, 1)
         else:
             reward = self.q[action]
-        # new_estimate = old_estimation + 1/k * (target - old_estimate)
-        self.avg_reward[action] = self.avg_reward[action] + 1/self.occur[action] * (reward - self.avg_reward[action])
+        # new_estimate =  (old_estimation * (k-1) + target) / k = old_estimation + 1/k * (target - old_estimate)
+        self.avg_reward[action] = self.avg_reward[action] + 1 / self.action_occur_count[action] * (reward - self.avg_reward[action])
         self.rewards[self.cur_step - 1] = reward
         if action == self.max_q:
-            self.optimal_counts[self.cur_step - 1] += 1
+            self.optimal_action_occur_count[self.cur_step - 1] += 1
         self.actions_order[self.cur_step - 1] = self.find_order(action)
         self.cur_step += 1
         return reward
@@ -64,14 +79,14 @@ class NArmedBandit(object):
         return index
 
     def play(self):
-        self.get_reward(self.find_action())
+        self.get_reward(self.choose_action())
+
 
 if __name__ == '__main__':
-
-    num_times = 2000
-    num_steps = 1000
+    num_times = 100
+    num_steps = 4000
     num_arms = 10
-    epsilons = [0.1,0.01,0]
+    epsilons = [0.1, 0.01, 0]
     num_epsilons = len(epsilons)
     with_noise = False
     bandits = [NArmedBandit(num_arms, eps, num_steps, with_noise) for eps in epsilons]
@@ -88,7 +103,7 @@ if __name__ == '__main__':
 
         for i in range(num_epsilons):
             avgs_reward_per_step[i] = avgs_reward_per_step[i] + bandits[i].rewards
-            avgs_optimal_counts[i] = avgs_optimal_counts[i] + bandits[i].optimal_counts
+            avgs_optimal_counts[i] = avgs_optimal_counts[i] + bandits[i].optimal_action_occur_count
             avgs_actions_order[i] = avgs_actions_order[i] + bandits[i].actions_order
 
     avgs_reward_per_step = avgs_reward_per_step / num_times
