@@ -16,6 +16,7 @@ is always 'second best' if it is not the best, and the it beats epsilon0.1 on av
 '''
 
 
+
 class NArmedBandit(object):
     def __init__(self,  num_actions, epsilon, num_steps, with_noise = True):
         self.num_actions = num_actions
