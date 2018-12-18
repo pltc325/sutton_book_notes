@@ -7,7 +7,7 @@ under a stationary situation.
 
 We can see that sample average outperforms constant alpha, 
 it's not a surprise as we have no reason to put emphasis on
-recent actions since it's stationary.
+recent actions as it's stationary.
 
 Moreover, higher value of alphas will result in lower average rewards
 as well as lower percentage of best action hits.
