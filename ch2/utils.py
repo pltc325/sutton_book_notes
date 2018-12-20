@@ -1,12 +1,14 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class NArmedBandit(object):
-    def __init__(self, name, num_action, epsilon, num_step, with_noise=True, Q=None, alpha=None, is_stationary=True):
+    def __init__(self, name, num_action, num_step, with_noise=True,
+                 action_selection_strategy={'eps-greedy': {'eps': 0.1}}, Q_update_rule={'sample-average': None},
+                 Q=None, is_stationary=True
+                 ):
         self.name = name
         self.num_action = num_action
-        self.epsilon = epsilon
         self.num_step = num_step
         # whether or not the estimated action value will be added noise based on actual action value
         # with noise: Q = q + N(0,1) or without noise: Q = q
@@ -21,7 +23,6 @@ class NArmedBandit(object):
         # rewards obtained during steps
         self.rewards = None
         # weight indicating how much the latest action has impact on the cumulative reward
-        self.alpha = alpha
         # number of each action's occurrences
         self.action_occur_count = None
         # max actual action value
@@ -34,6 +35,8 @@ class NArmedBandit(object):
         self.is_stationary = is_stationary
         self.is_updated = False
         self.parameter_Q = Q
+        self.Q_update_rule = Q_update_rule
+        self.action_selection_strategy = action_selection_strategy
         self.reset()
 
     def reset(self):
@@ -53,7 +56,7 @@ class NArmedBandit(object):
         else:
             # self.Q = np.ones((self.num_action,)) * 5
             self.Q = self.parameter_Q.copy()
-        print("Q:{0}".format(self.Q))
+        # print("Q:{0}".format(self.Q))
         self.cur_step = 1
         self.rewards = np.zeros(self.num_step)
         self.action_occur_count = np.zeros((self.num_action,))
@@ -78,12 +81,19 @@ class NArmedBandit(object):
                     self.max_q = np.argmax(self.q)
                     self.is_updated = True
 
-    def choose_action(self):
-        p = np.random.uniform(0, 1)
-        if p > self.epsilon:
-            action = np.argmax(self.Q)
-        else:
-            action = np.random.randint(0, self.num_action)
+    def select_action(self):
+        action = 0
+        if 'eps-greedy' in self.action_selection_strategy:
+            eps = self.action_selection_strategy['eps-greedy']['eps']
+            p = np.random.uniform(0, 1)
+            if p > eps:
+                action = np.argmax(self.Q)
+            else:
+                action = np.random.randint(0, self.num_action)
+        if 'UCB' in self.action_selection_strategy:
+            c = self.action_selection_strategy['UCB']['c']
+            Q_with_upper_bound = self.Q + c * np.sqrt(np.log(self.cur_step) / self.action_occur_count)
+            action = np.argmax(Q_with_upper_bound)
         self.action_occur_count[action] += 1
         # print("{1} action chosen:{0}".format(action, self.name))
         return action
@@ -93,11 +103,14 @@ class NArmedBandit(object):
             reward = self.q[action] + np.random.normal(0, 1)
         else:
             reward = self.q[action]
-        if self.alpha is None:
+        if 'sample-average' in self.Q_update_rule:
             # new_estimate =  (old_estimation * (k-1) + target) / k = old_estimation + 1/k * (target - old_estimate)
             self.Q[action] = self.Q[action] + 1 / self.action_occur_count[action] * (reward - self.Q[action])
+        elif 'constant-alpha' in self.Q_update_rule:
+            alpha = self.Q_update_rule['constant-alpha']
+            self.Q[action] = self.Q[action] + alpha * (reward - self.Q[action])
         else:
-            self.Q[action] = self.Q[action] + self.alpha * (reward - self.Q[action])
+            raise ValueError('Unrecognized Q update rule')
 
         self.rewards[self.cur_step - 1] = reward
         # print("{1} action chosen:{0} max_q:{2}".format(action, self.name, self.max_q))
@@ -115,17 +128,20 @@ class NArmedBandit(object):
         return index
 
     def play(self):
-        self.get_reward(self.choose_action())
+        self.get_reward(self.select_action())
         self.update()
 
     def parameter_info(self):
-        return "eps:{0}/alpha:{1}/stationary:{2}/is_optimistic_init:{3}".format(self.epsilon, self.alpha, self.is_stationary, self.is_optimistic_init)
+        return "action_selection_strategy:{0}/Q_update_rule:{1}/stationary:{2}/is_optimistic_init:{3}".format(self.action_selection_strategy,
+                                                                                        self.Q_update_rule,
+                                                                                        self.is_stationary,
+                                                                                        self.is_optimistic_init)
 
     def show(self):
         print("alpha:{0}".format(self.alpha))
         print("q:{0}".format(self.q))
         print("Q:{0}".format(self.Q))
-        print("q-Q:{0}".format(self.q-self.Q))
+        print("q-Q:{0}".format(self.q - self.Q))
 
 
 class TestBed(object):
@@ -141,20 +157,24 @@ class TestBed(object):
         for t in range(self.num_time):
             for band in self.bandits:
                 band.reset()
-            for step in range(band.num_step):
-                for band in self.bandits:
+            # for step in range(band.num_step):
+            #     for band in self.bandits:
+            #         band.play()
+            for band in self.bandits:
+                for step in range(band.num_step):
                     band.play()
 
             for i in range(len(self.bandits)):
                 self.sum_rewards[i] = self.sum_rewards[i] + self.bandits[i].rewards
-                self.sum_optimal_action_occur_count[i] = self.sum_optimal_action_occur_count[i] + self.bandits[i].optimal_action_occur_count
+                self.sum_optimal_action_occur_count[i] = self.sum_optimal_action_occur_count[i] + self.bandits[
+                    i].optimal_action_occur_count
 
-        self.avg_rewards = self.sum_rewards/self.num_time
+        self.avg_rewards = self.sum_rewards / self.num_time
         self.avg_optimal_action_occur_count = self.sum_optimal_action_occur_count / self.num_time
 
     def show(self):
         x = np.arange(self.bandits[0].num_step)
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(14, 9))
         plt.subplot(2, 1, 1)
         plt.title("Average reward")
         for i in range(len(self.avg_rewards)):

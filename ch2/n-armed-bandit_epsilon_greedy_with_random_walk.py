@@ -8,6 +8,7 @@ sample average method because it puts more emphasis on the recent
 action than the later one.
 '''
 
+
 class NArmedBandit(object):
     actions = [0,1,2]
 

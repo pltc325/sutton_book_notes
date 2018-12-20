@@ -22,7 +22,13 @@ if __name__ == '__main__':
     num_arms = 10
     epsilons = [0.1, 0.01, 0]
     with_noise = False
-    bandits = [NArmedBandit("eps:{0}".format(eps), num_arms, eps, num_steps, with_noise) for eps in epsilons]
+    action_selection_strategies = [
+        {'eps-greedy':{'eps':0.1}},
+        {'eps-greedy':{'eps': 0.01}},
+        {'eps-greedy':{'eps': 0}}
+    ]
+
+    bandits = [NArmedBandit("{0}".format(action_selection_strategy), num_arms, num_steps, with_noise, action_selection_strategy, {'sample-average': None}) for action_selection_strategy in action_selection_strategies]
 
     num_time = 100
     testbed = TestBed(bandits, num_time=num_time)
