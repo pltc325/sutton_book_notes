@@ -91,9 +91,16 @@ class NArmedBandit(object):
             else:
                 action = np.random.randint(0, self.num_action)
         if 'UCB' in self.action_selection_strategy:
-            c = self.action_selection_strategy['UCB']['c']
-            Q_with_upper_bound = self.Q + c * np.sqrt(np.log(self.cur_step) / self.action_occur_count)
-            action = np.argmax(Q_with_upper_bound)
+            action = 0
+            found = False
+            for i in range(len(self.action_occur_count)):
+                if self.action_occur_count[i] == 0:
+                    action = i
+                    found = True
+            if not found:
+                c = self.action_selection_strategy['UCB']['c']
+                Q_with_upper_bound = self.Q + c * np.sqrt(np.log(self.cur_step) / self.action_occur_count)
+                action = np.argmax(Q_with_upper_bound)
         self.action_occur_count[action] += 1
         # print("{1} action chosen:{0}".format(action, self.name))
         return action

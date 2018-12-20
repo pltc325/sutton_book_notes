@@ -14,12 +14,11 @@ I tried UCB(c=0.5), it got better result in terms of average reward as well as o
 
 
 if __name__ == '__main__':
-    num_steps = 3000
+    num_steps = 1000
     num_arms = 10
-    epsilons = [0.1, 0.01, 0]
-    with_noise = False
+    with_noise = True
     bandit_eps_greedy = NArmedBandit("eps-greedy", num_arms, num_steps, with_noise, {'eps-greedy': {'eps': 0.1}})
-    bandit_UCB = NArmedBandit("UCB", num_arms, num_steps, with_noise, {'UCB': {'c': 0.5}})
+    bandit_UCB = NArmedBandit("UCB", num_arms, num_steps, with_noise, {'UCB': {'c': 2}})
     bandits = [bandit_eps_greedy, bandit_UCB]
 
     num_time = 500
